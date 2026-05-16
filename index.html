@@ -1,0 +1,714 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KeyFlow - DTMF Tone Generator & T9 Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .audio-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8em;
+            font-weight: normal;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: #ccc;
+            border-radius: 13px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: #667eea;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(24px);
+        }
+
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .key {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 15px;
+            padding: 20px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .key:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .key:active {
+            transform: translateY(0);
+        }
+
+        .key-letters {
+            display: block;
+            font-size: 0.5em;
+            margin-top: 5px;
+            opacity: 0.9;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 12px;
+            padding-right: 45px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .clear-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .clear-btn:hover {
+            background: #ff5252;
+            transform: translateY(-50%) scale(1.05);
+        }
+
+        .output {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            font-family: 'Courier New', monospace;
+            min-height: 50px;
+            word-wrap: break-word;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            margin-top: 20px;
+        }
+
+        .output:hover {
+            background: #e9ecef;
+            border-left-color: #764ba2;
+        }
+
+        .output::after {
+            content: '📋 Click to copy';
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.75em;
+            color: #999;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .output:hover::after {
+            opacity: 1;
+        }
+
+        .tooltip {
+            position: fixed;
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip.show {
+            opacity: 1;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #1976d2;
+        }
+
+        .info strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .separator-note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            color: #856404;
+        }
+
+        .separator-note strong {
+            color: #856404;
+        }
+
+        .example {
+            background: #f0f0f0;
+            padding: 8px;
+            border-radius: 5px;
+            margin-top: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 DTMF Tone Generator</h1>
+        <p class="subtitle">Dual-Tone Multi-Frequency & T9 Text Converter</p>
+
+        <!-- DTMF Keypad -->
+        <div class="section">
+            <div class="section-title">
+                Phone Keypad
+                <div class="audio-toggle">
+                    <span>Audio:</span>
+                    <div class="toggle-switch active" id="audioToggle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="keypad">
+                <button class="key" data-digit="1" data-letters="">1<span class="key-letters"> </span></button>
+                <button class="key" data-digit="2" data-letters="ABC">2<span class="key-letters">ABC</span></button>
+                <button class="key" data-digit="3" data-letters="DEF">3<span class="key-letters">DEF</span></button>
+                <button class="key" data-digit="4" data-letters="GHI">4<span class="key-letters">GHI</span></button>
+                <button class="key" data-digit="5" data-letters="JKL">5<span class="key-letters">JKL</span></button>
+                <button class="key" data-digit="6" data-letters="MNO">6<span class="key-letters">MNO</span></button>
+                <button class="key" data-digit="7" data-letters="PQRS">7<span class="key-letters">PQRS</span></button>
+                <button class="key" data-digit="8" data-letters="TUV">8<span class="key-letters">TUV</span></button>
+                <button class="key" data-digit="9" data-letters="WXYZ">9<span class="key-letters">WXYZ</span></button>
+                <button class="key" data-digit="*" data-letters="">*<span class="key-letters"> </span></button>
+                <button class="key" data-digit="0" data-letters="SPACE">0<span class="key-letters">SPACE</span></button>
+                <button class="key" data-digit="#" data-letters="">#<span class="key-letters"> </span></button>
+            </div>
+        </div>
+
+        <!-- Number to Text Conversion -->
+        <div class="section">
+            <div class="section-title">Numbers → Text (T9 Style)</div>
+            <div class="input-group">
+                <label>Enter numbers (only 0-9, *, #, /, ', and spaces allowed):</label>
+                <div class="input-wrapper">
+                    <input type="text" id="numbersInput" placeholder="e.g., 4433999 or 533 333 333 / 4447777">
+                    <button class="clear-btn" id="clearNumbers">Clear</button>
+                </div>
+            </div>
+            <div class="separator-note">
+                <strong>💡 Letter vs Word Separators:</strong>
+                • <strong>Consecutive different digits</strong> = different letters (4433999 = HEY)<br>
+                • <strong>Single space</strong> = separate same-key letters (33 33 = EE)<br>
+                • <strong>3+ spaces</strong>, <strong>'</strong> (apostrophe), or <strong>/</strong> (slash) = separate words<br>
+                • <strong>Click keypad buttons</strong> to insert digits
+                <div class="example">"4433999" → "HEY" (44=H, 33=E, 999=Y)</div>
+                <div class="example">"533 333 333 / 4447777 / 7777666 / 222666 666 555" → "JEFF IS SO COOL"</div>
+                <div class="example">"44 33 555 555 666   9 666 777 555 3" → "HELLO WORLD"</div>
+            </div>
+            <div class="output" id="numbersOutput">Type numbers to see text conversion...</div>
+        </div>
+
+        <!-- Text to Numbers Conversion -->
+        <div class="section">
+            <div class="section-title">Text → Numbers</div>
+            <div class="input-group">
+                <label>Enter text to convert (auto-capitalized):</label>
+                <div class="input-wrapper">
+                    <input type="text" id="textInput" placeholder="e.g., HELLO WORLD">
+                    <button class="clear-btn" id="clearText">Clear</button>
+                </div>
+            </div>
+            <div class="separator-note">
+                <strong>💡 Output Format:</strong>
+                Words are automatically separated with <strong>/</strong> (slash)
+                <div class="example">"HEY" → "4433999"</div>
+                <div class="example">"JEFF IS SO COOL" → "533 333 333 / 444 7777 / 7777 666 / 222 666 666 555"</div>
+                <div class="example">"HELLO WORLD" → "44 33 555 555 666 / 9 666 777 555 3"</div>
+            </div>
+            <div class="output" id="textOutput">Type text to see number conversion...</div>
+        </div>
+
+        <!-- Info Box -->
+        <div class="info">
+            <strong>How it works:</strong>
+            • Click keypad buttons to hear DTMF tones AND insert digits<br>
+            • Multi-tap: Press same key multiple times (e.g., 2=A, 22=B, 222=C)<br>
+            • <strong>Consecutive different digits</strong> = different letters (no space needed)<br>
+            • <strong>Single space</strong> = separate same-key letters (33 33 = EE)<br>
+            • <strong>3+ spaces, ' or /</strong> = separate words<br>
+            • <strong>Click output text</strong> to copy to clipboard<br>
+            • Toggle audio on/off using the switch above the keypad
+        </div>
+    </div>
+
+    <!-- Tooltip for copy feedback -->
+    <div class="tooltip" id="tooltip">Copied to clipboard! ✓</div>
+
+    <script>
+        // DTMF frequency pairs for each key
+        const dtmfFrequencies = {
+            '1': [697, 1209], '2': [697, 1336], '3': [697, 1477],
+            '4': [770, 1209], '5': [770, 1336], '6': [770, 1477],
+            '7': [852, 1209], '8': [852, 1336], '9': [852, 1477],
+            '*': [941, 1209], '0': [941, 1336], '#': [941, 1477]
+        };
+
+        // T9 keypad mapping
+        const t9Map = {
+            '2': 'ABC', '3': 'DEF', '4': 'GHI', '5': 'JKL',
+            '6': 'MNO', '7': 'PQRS', '8': 'TUV', '9': 'WXYZ',
+            '0': ' ', '1': '1', '*': '*', '#': '#'
+        };
+
+        // Reverse mapping for text to numbers
+        const letterToKey = {};
+        for (const [key, letters] of Object.entries(t9Map)) {
+            for (let i = 0; i < letters.length; i++) {
+                letterToKey[letters[i]] = { key: key, presses: i + 1 };
+            }
+        }
+
+        // Audio context for tone generation
+        let audioContext = null;
+        let audioEnabled = true;
+
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        // Play DTMF tone
+        function playDTMF(digit, duration = 200) {
+            if (!audioEnabled) return;
+
+            initAudio();
+
+            if (!dtmfFrequencies[digit]) return;
+
+            const [freq1, freq2] = dtmfFrequencies[digit];
+            const now = audioContext.currentTime;
+
+            // Create two oscillators for the dual tones
+            const osc1 = audioContext.createOscillator();
+            const osc2 = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            osc1.frequency.value = freq1;
+            osc2.frequency.value = freq2;
+
+            osc1.connect(gainNode);
+            osc2.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            // Envelope for smooth sound
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.3, now + 0.01);
+            gainNode.gain.linearRampToValueAtTime(0.3, now + duration / 1000 - 0.01);
+            gainNode.gain.linearRampToValueAtTime(0, now + duration / 1000);
+
+            osc1.start(now);
+            osc2.start(now);
+            osc1.stop(now + duration / 1000);
+            osc2.stop(now + duration / 1000);
+        }
+
+        // Convert numbers to text with FIXED parsing logic
+        function numbersToText(input) {
+            // Replace word separators with delimiter
+            let normalized = input.replace(/\s{3,}/g, '|WORD|')
+                                  .replace(/'/g, '|WORD|')
+                                  .replace(/\//g, '|WORD|');
+
+            const words = normalized.split('|WORD|');
+            let result = [];
+
+            for (const word of words) {
+                if (word.trim().length === 0) continue;
+
+                // Split by spaces to get letter groups
+                const groups = word.trim().split(/\s+/);
+                let wordResult = '';
+
+                for (const group of groups) {
+                    if (group.length === 0) continue;
+
+                    // Parse group: split when digit changes
+                    let i = 0;
+                    while (i < group.length) {
+                        const currentDigit = group[i];
+                        let count = 1;
+
+                        // Count consecutive same digits
+                        while (i + count < group.length && group[i + count] === currentDigit) {
+                            count++;
+                        }
+
+                        // Convert to letter
+                        if (t9Map[currentDigit]) {
+                            const letters = t9Map[currentDigit];
+                            const index = (count - 1) % letters.length;
+                            wordResult += letters[index];
+                        } else {
+                            wordResult += currentDigit;
+                        }
+
+                        i += count;
+                    }
+                }
+
+                if (wordResult) {
+                    result.push(wordResult);
+                }
+            }
+
+            return result.join(' ');
+        }
+
+        // Convert text to numbers with SLASH separators between words
+        function textToNumbers(input) {
+            const text = input.toUpperCase();
+            const words = text.split(/\s+/);
+            let result = [];
+
+            for (const word of words) {
+                if (word.length === 0) continue;
+
+                let wordNumbers = '';
+                let lastKey = null;
+
+                for (const char of word) {
+                    if (letterToKey[char]) {
+                        const { key, presses } = letterToKey[char];
+                        const digitSequence = key.repeat(presses);
+
+                        // If same key as last, add space separator
+                        if (lastKey === key) {
+                            wordNumbers += ' ' + digitSequence;
+                        } else {
+                            wordNumbers += digitSequence;
+                        }
+
+                        lastKey = key;
+                    } else if (char === ' ') {
+                        wordNumbers += '0';
+                        lastKey = null;
+                    } else {
+                        wordNumbers += char;
+                        lastKey = null;
+                    }
+                }
+
+                if (wordNumbers) {
+                    result.push(wordNumbers);
+                }
+            }
+
+            // Join words with slash separator
+            return result.join(' / ');
+        }
+
+        // Copy to clipboard function
+        function copyToClipboard(text, event) {
+            if (!text || text.includes('Type') || text === '(empty)') return;
+
+            navigator.clipboard.writeText(text).then(() => {
+                // Show tooltip at cursor position
+                const tooltip = document.getElementById('tooltip');
+                tooltip.style.left = event.pageX + 'px';
+                tooltip.style.top = (event.pageY - 40) + 'px';
+                tooltip.classList.add('show');
+
+                setTimeout(() => {
+                    tooltip.classList.remove('show');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+            });
+        }
+
+        // Get references to input fields
+        const numbersInput = document.getElementById('numbersInput');
+        const numbersOutput = document.getElementById('numbersOutput');
+        const textInput = document.getElementById('textInput');
+        const textOutput = document.getElementById('textOutput');
+
+        // Input validation for numbersInput - only allow 0-9, *, #, /, ', and spaces
+        numbersInput.addEventListener('input', (e) => {
+            const cursorPos = e.target.selectionStart;
+            const originalValue = e.target.value;
+
+            // Filter to only allowed characters: 0-9, *, #, /, ', and spaces
+            const filteredValue = originalValue.replace(/[^0-9*#/' ]/g, '');
+
+            if (filteredValue !== originalValue) {
+                e.target.value = filteredValue;
+                // Adjust cursor position if characters were removed
+                const removedChars = originalValue.length - filteredValue.length;
+                e.target.setSelectionRange(cursorPos - removedChars, cursorPos - removedChars);
+            }
+
+            // Trigger conversion
+            const input = e.target.value;
+            if (input.trim()) {
+                const converted = numbersToText(input);
+                numbersOutput.textContent = converted || '(empty)';
+            } else {
+                numbersOutput.textContent = 'Type numbers to see text conversion...';
+            }
+        });
+
+        // Auto-capitalize textInput
+        textInput.addEventListener('input', (e) => {
+            const cursorPos = e.target.selectionStart;
+            const originalValue = e.target.value;
+            const capitalizedValue = originalValue.toUpperCase();
+
+            if (capitalizedValue !== originalValue) {
+                e.target.value = capitalizedValue;
+                e.target.setSelectionRange(cursorPos, cursorPos);
+            }
+
+            // Trigger conversion
+            const input = e.target.value;
+            if (input.trim()) {
+                const converted = textToNumbers(input);
+                textOutput.textContent = converted || '(empty)';
+            } else {
+                textOutput.textContent = 'Type text to see number conversion...';
+            }
+        });
+
+        // Click to copy functionality
+        numbersOutput.addEventListener('click', (e) => {
+            copyToClipboard(numbersOutput.textContent, e);
+        });
+
+        textOutput.addEventListener('click', (e) => {
+            copyToClipboard(textOutput.textContent, e);
+        });
+
+        // Audio toggle
+        const audioToggle = document.getElementById('audioToggle');
+        audioToggle.addEventListener('click', () => {
+            audioEnabled = !audioEnabled;
+            audioToggle.classList.toggle('active');
+        });
+
+        // Clear buttons
+        document.getElementById('clearNumbers').addEventListener('click', () => {
+            numbersInput.value = '';
+            numbersOutput.textContent = 'Type numbers to see text conversion...';
+            numbersInput.focus();
+        });
+
+        document.getElementById('clearText').addEventListener('click', () => {
+            textInput.value = '';
+            textOutput.textContent = 'Type text to see number conversion...';
+            textInput.focus();
+        });
+
+        // Event listeners for keypad
+        document.querySelectorAll('.key').forEach(button => {
+            button.addEventListener('click', () => {
+                const digit = button.dataset.digit;
+                playDTMF(digit);
+
+                // Insert digit into the numbers input field
+                const cursorPos = numbersInput.selectionStart;
+                const currentValue = numbersInput.value;
+                const newValue = currentValue.slice(0, cursorPos) + digit + currentValue.slice(cursorPos);
+                numbersInput.value = newValue;
+
+                numbersInput.setSelectionRange(cursorPos + 1, cursorPos + 1);
+                numbersInput.focus();
+                numbersInput.dispatchEvent(new Event('input'));
+
+                // Visual feedback
+                button.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    button.style.transform = '';
+                }, 100);
+            });
+        });
+
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            const key = e.key;
+            if (dtmfFrequencies[key]) {
+                playDTMF(key);
+                const button = document.querySelector(`[data-digit="${key}"]`);
+                if (button) {
+                    button.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        button.style.transform = '';
+                    }, 100);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
