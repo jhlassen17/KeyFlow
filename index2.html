@@ -1,17 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
-    <!--
-        KeyFlow - Advanced DTMF Generator & Decoder
-        @Author: Jeffrey Lassen (jeff@jhl.me)
-        @Description: A web tool to generate DTMF tones, convert text to numbers, decode audio files, and decode live microphone input
-        @License: MIT License
-        @Last Updated: 2026-05-18
-        @Version: 1.1.1
-    -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KeyFlow - Advanced DTMF Generator & Decoder</title>
+    <title>KeyFlow - Advanced DTMF Generator</title>
    <style>
   :root {
     /* --- Colors --- */
@@ -30,7 +23,6 @@
     --color-dark: #333;
     --color-error: #ff6b6b;
     --color-success: #51cf66;
-    --color-recording: #ff6b6b;
 
     /* --- Gradients & Shadows --- */
     --gradient-main: linear-gradient(135deg, var(--color-bg-body-start) 0%, var(--color-bg-body-end) 100%);
@@ -64,9 +56,9 @@
     --font-input: 1.1em;
     --font-output: 1.05em;
     --font-key: 1.4em;
-    --font-special-key: 1em;
+    --font-special-key: 1em; /* Approximated from context */
     --font-tooltip: 0.9em;
-    --font-suggestion: 1em;
+    --font-suggestion: 1em; /* Default fallback */
 
     /* --- Layout & Grid --- */
     --grid-gap-sm: 12px;
@@ -80,12 +72,14 @@
       box-sizing: border-box;
   }
 
+
   body {
       font-family: var(--font-body);
       background: var(--gradient-main);
       min-height: 100vh;
       padding: var(--space-md);
   }
+
 
   .container {
       max-width: 900px;
@@ -96,12 +90,14 @@
       padding: var(--space-xl);
   }
 
+
   h1 {
       text-align: center;
       color: var(--color-primary);
       margin-bottom: var(--space-xs);
       font-size: var(--font-h1);
   }
+
 
   .subtitle {
       text-align: center;
@@ -110,12 +106,14 @@
       font-size: var(--font-subtitle);
   }
 
+
   .main-section {
       background: var(--color-bg-input);
       border-radius: var(--radius-lg);
       padding: var(--space-xl);
       margin-bottom: var(--space-md);
   }
+
 
   .section-title {
       font-size: var(--font-section-title);
@@ -127,6 +125,7 @@
       align-items: center;
   }
 
+
   .mode-indicator {
       font-size: var(--font-mode-indicator);
       padding: var(--space-xs) var(--space-sm);
@@ -134,6 +133,7 @@
       background: var(--color-primary);
       color: white;
   }
+
 
   .unified-input {
       width: 100%;
@@ -147,10 +147,12 @@
       text-transform: uppercase; 
   }
 
+
   .unified-input:focus {
       outline: none;
       border-color: var(--color-primary);
   }
+
 
   .output-display {
       background: white;
@@ -165,10 +167,12 @@
       font-size: var(--font-output);
   }
 
+
   .output-display:hover {
       background: #f0f0f0;
       border-left-color: var(--color-secondary);
   }
+
 
   .output-display::after {
       content: '📋 Click to copy';
@@ -182,9 +186,11 @@
       transition: opacity 0.2s;
   }
 
+
   .output-display:hover::after {
       opacity: 1;
   }
+
 
   .controls-grid {
       display: grid;
@@ -193,23 +199,27 @@
       margin-bottom: var(--space-lg);
   }
 
+
   .control-group {
       background: white;
       padding: var(--space-md);
       border-radius: var(--radius-md);
   }
 
+
   .control-group label {
       display: block;
-      font-size: var(--font-mode-indicator);
+      font-size: var(--font-mode-indicator); /* Adjusted for readability */
       color: var(--color-text-muted);
       margin-bottom: var(--space-xs);
       font-weight: 500;
   }
 
+
   .control-group input[type="range"] {
       width: 100%;
   }
+
 
   .control-group .value-display {
       text-align: center;
@@ -218,11 +228,13 @@
       margin-top: var(--space-xs);
   }
 
+
   .toggle-group {
       display: flex;
       gap: var(--space-sm);
       flex-wrap: wrap;
   }
+
 
   .toggle-btn {
       flex: 1;
@@ -236,11 +248,13 @@
       font-weight: 500;
   }
 
+
   .toggle-btn.active {
       background: var(--color-primary);
       color: white;
       border-color: var(--color-primary);
   }
+
 
   .keypad {
       display: grid;
@@ -248,6 +262,7 @@
       gap: var(--grid-gap-md);
       margin-bottom: var(--space-lg);
   }
+
 
   .key {
       background: var(--gradient-main);
@@ -262,21 +277,25 @@
       box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
   }
 
+
   .key:hover {
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
   }
 
+
   .key:active {
       transform: translateY(0);
   }
 
+
   .key-letters {
       display: block;
-      font-size: var(--font-mode-indicator);
+      font-size: var(--font-mode-indicator); /* Adjusted for readability */
       margin-top: var(--space-xs);
       opacity: 0.9;
   }
+
 
   .special-keys {
       display: grid;
@@ -284,6 +303,7 @@
       gap: var(--grid-gap-md);
       margin-top: var(--space-md);
   }
+
 
   .special-key {
       background: var(--color-error);
@@ -296,10 +316,12 @@
       transition: all 0.2s;
   }
 
+
   .special-key:hover {
       background: #ff5252;
       transform: translateY(-1px);
   }
+
 
   .waveform-container {
       background: white;
@@ -308,6 +330,7 @@
       margin-bottom: var(--space-lg);
   }
 
+
   #waveform {
       width: 100%;
       height: 150px;
@@ -315,74 +338,74 @@
       border-radius: var(--radius-sm);
   }
 
+
   .action-buttons {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: var(--grid-gap-md);
   }
 
+
   .btn {
       padding: var(--space-md) var(--space-lg);
       border: none;
       border-radius: var(--radius-sm);
-      font-size: var(--font-section-title);
+      font-size: var(--font-section-title); /* Adjusted for readability */
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s;
   }
+
 
   .btn-primary {
       background: var(--gradient-main);
       color: white;
   }
 
+
   .btn-primary:hover {
       transform: translateY(-2px);
       box-shadow: var(--shadow-hover);
   }
+
 
   .btn-secondary {
       background: var(--color-border);
       color: var(--color-text-main);
   }
 
+
   .btn-secondary:hover {
       background: #d0d0d0;
   }
+
 
   .btn-success {
       background: var(--color-success);
       color: white;
   }
 
+
   .btn-success:hover {
       background: #40c057;
   }
 
-  .btn-recording {
-      background: var(--color-recording);
-      color: white;
-      animation: pulse 1.5s infinite;
-  }
-
-  @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
-  }
 
   .info-box {
       background: var(--color-bg-info);
       padding: var(--space-md);
       border-radius: var(--radius-md);
       margin-top: var(--space-lg);
-      font-size: var(--font-mode-indicator);
+      font-size: var(--font-mode-indicator); /* Adjusted for readability */
       color: var(--color-text-info);
   }
+
 
   .info-box strong {
       display: block;
       margin-bottom: var(--space-xs);
   }
+
 
   .tooltip {
       position: fixed;
@@ -397,9 +420,11 @@
       transition: opacity 0.3s;
   }
 
+
   .tooltip.show {
       opacity: 1;
   }
+
 
   .predictive-suggestions {
       background: white;
@@ -410,9 +435,11 @@
       display: none;
   }
 
+
   .predictive-suggestions.show {
       display: block;
   }
+
 
   .suggestion-item {
       padding: var(--space-xs);
@@ -421,89 +448,17 @@
       transition: background 0.2s;
   }
 
+
   .suggestion-item:hover {
       background: #f0f0f0;
-  }
-
-  .site-footer {
-      text-align: center;
-      color: var(--color-text-muted);
-      margin-top: var(--space-lg);
-      font-size: var(--font-mode-indicator);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-  }
-
-  .decoder-section {
-      background: var(--color-bg-input);
-      border-radius: var(--radius-lg);
-      padding: var(--space-xl);
-      margin-bottom: var(--space-md);
-  }
-
-  .file-upload {
-      display: none;
-  }
-
-  .upload-label {
-      display: block;
-      padding: var(--space-lg);
-      border: 2px dashed var(--color-border);
-      border-radius: var(--radius-md);
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s;
-      margin-bottom: var(--space-md);
-  }
-
-  .upload-label:hover {
-      border-color: var(--color-primary);
-      background: rgba(102, 126, 234, 0.05);
-  }
-
-  .decoded-output {
-      background: white;
-      padding: var(--space-md);
-      border-radius: var(--radius-md);
-      border-left: 4px solid var(--color-success);
-      font-family: var(--font-mono);
-      min-height: 60px;
-      font-size: var(--font-output);
-      margin-top: var(--space-md);
   }
 </style>
 
 </head>
 <body>
-    <!-- Main Container -->
     <div class="container">
-        <!-- Header -->
-        <h1>KeyFlow - 🎵 DTMF Generator & Decoder</h1>
-        <p class="subtitle">Advanced DTMF Tone Generator, T9 Converter & Audio Decoder</p>
-        <p class="subtitle">Generate tones, decode audio files, or decode live microphone input!</p>
-        <p class="subtitle">Download this page and save it to your device to run completely offline! <a href="index.html" download="KeyFlow.html" id="offlineDLLink">Click here for offline version</a>.</p>
-        
-        <!-- DTMF Decoder Section -->
-        <div class="decoder-section">
-            <div class="section-title">🎤 DTMF Decoder</div>
-            
-            <!-- File Upload -->
-            <label for="audioFile" class="upload-label">
-                📁 Click to upload audio file (WAV, MP3, OGG)
-            </label>
-            <input type="file" id="audioFile" class="file-upload" accept="audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/x-m4a,audio/aac,audio/ogg,audio/webm,audio/*">
-            
-            <!-- Microphone Controls -->
-            <div class="action-buttons" style="margin-bottom: 15px;">
-                <button class="btn btn-primary" id="micToggle">🎤 Start Microphone</button>
-                <button class="btn btn-secondary" id="clearDecoded">🗑 Clear Decoded</button>
-            </div>
-            
-            <!-- Decoded Output -->
-            <div class="section-title">Decoded DTMF Sequence</div>
-            <div class="decoded-output" id="decodedOutput">Upload audio or start microphone to decode DTMF tones...</div>
-        </div>
+        <h1>KeyFlow - 🎵 DTMF Tone Generator</h1>
+        <p class="subtitle">Advanced DTMF Tone Generator & T9 Converter</p>
 
         <!-- Main Input/Output Section -->
         <div class="main-section">
@@ -511,33 +466,34 @@
                 Unified Input
                 <span class="mode-indicator" id="modeIndicator">Auto-Detect Mode</span>
             </div>
-            <!-- Unified Input -->
             <textarea class="unified-input" id="unifiedInput" 
                 placeholder="Type numbers (0-9, *, #, /, ') or text - auto-detects mode and plays tones..." 
                 rows="3"></textarea>
-            <!-- Output Display -->
+
             <div class="section-title">Output</div>
             <div class="output-display" id="outputDisplay">Start typing to see conversion...</div>
-            <!-- Predictive Suggestions -->
+
             <div class="predictive-suggestions" id="predictiveSuggestions"></div>
         </div>
-        
+
         <!-- Controls -->
         <div class="controls-grid">
             <div class="control-group">
                 <label>Tone Duration: <span id="durationValue">200ms</span></label>
                 <input type="range" id="toneDuration" min="50" max="500" value="200" step="10">
             </div>
+
             <div class="control-group">
                 <label>Volume: <span id="volumeValue">30%</span></label>
                 <input type="range" id="volume" min="0" max="100" value="30" step="5">
             </div>
+
             <div class="control-group">
                 <label>Pause Duration: <span id="pauseValue">500ms</span></label>
                 <input type="range" id="pauseDuration" min="100" max="2000" value="500" step="100">
             </div>
         </div>
-        
+
         <!-- Mode Toggles -->
         <div class="main-section">
             <div class="section-title">Features</div>
@@ -557,16 +513,16 @@
                 <button class="btn btn-secondary" id="copyOutput">📋 Copy Output</button>
             </div>
         </div>
-        
+
         <!-- Waveform Display -->
         <div class="waveform-container" id="waveformContainer" style="display: none;">
             <div class="section-title">Frequency Visualization</div>
             <canvas id="waveform"></canvas>
         </div>
-        
+
         <!-- Keypad -->
         <div class="main-section">
-            <div class="section-title" id="keypadLabel">Phone Keypad</div>
+            <div class="section-title">Phone Keypad</div>
             <div class="keypad">
                 <button class="key" data-digit="1">1<span class="key-letters"> </span></button>
                 <button class="key" data-digit="2">2<span class="key-letters">ABC</span></button>
@@ -578,33 +534,28 @@
                 <button class="key" data-digit="8">8<span class="key-letters">TUV</span></button>
                 <button class="key" data-digit="9">9<span class="key-letters">WXYZ</span></button>
                 <button class="key" data-digit="*">*<span class="key-letters"> </span></button>
-                <button class="key" data-digit="0" id="focusHere">0<span class="key-letters">SPACE</span></button>
+                <button class="key" data-digit="0">0<span class="key-letters">SPACE</span></button>
                 <button class="key" data-digit="#">#<span class="key-letters"> </span></button>
             </div>
+
+            
         </div>
-        
+
         <!-- Info Box -->
         <div class="info-box">
             <strong>🎯 Features:</strong>
             • <strong>Auto-Play:</strong> Tones play automatically when typing digits<br>
             • <strong>Auto-Detect:</strong> Type numbers for text output, type text for number output<br>
-            • <strong>Audio Decoder:</strong> Upload audio files or use microphone to decode DTMF tones<br>
             • <strong>Pause Symbol:</strong> Use comma (,) for pauses in sequences<br>
             • <strong>T9 Predictive:</strong> Enable for word suggestions while typing<br>
             • <strong>Export Audio:</strong> Save tone sequences as WAV files<br>
             • <strong>Waveform:</strong> Real-time frequency visualization<br>
             • <strong>Separators:</strong> Use /, ', or 3+ spaces between words
         </div>
-        <div id="siteFooter">
-            <!-- Footer -->
-            <p class="subtitle">&#0169 (2026) - Lassens.IT - Made with ❤️. Version: 1.1.0 - <a href="https://buymeacoffee.com/hanf" title="Support Us">Buy us a drink</a></p>
-        </div>
     </div>
-    
-    <!-- Tooltip -->
+
     <div class="tooltip" id="tooltip">Copied to clipboard! ✓</div>
-    
-    <!-- JavaScript -->
+
     <script>
         // DTMF frequencies
         const dtmfFrequencies = {
@@ -621,7 +572,6 @@
             '0': ' ', '1': '1', '*': '*', '#': '#'
         };
 
-        // Reverse mapping for text to numbers
         const letterToKey = {};
         for (const [key, letters] of Object.entries(t9Map)) {
             for (let i = 0; i < letters.length; i++) {
@@ -683,17 +633,6 @@
         let lastInputLength = 0;
         let isPlaying = false;
         let stopPlayback = false;
-        let jWordSeparators = "0";
-        
-        // Decoder state
-        let micStream = null;
-        let micAnalyser = null;
-        let micDataArray = null;
-        let isRecording = false;
-        let decodedSequence = '';
-        let lastDetectedDigit = null;
-        let lastDetectionTime = 0;
-        let detectionCooldown = 300; // ms between detections
 
         // Elements
         const unifiedInput = document.getElementById('unifiedInput');
@@ -704,12 +643,7 @@
         const canvas = document.getElementById('waveform');
         const canvasCtx = canvas ? canvas.getContext('2d') : null;
         const playButton = document.getElementById('playSequence');
-        const decodedOutput = document.getElementById('decodedOutput');
-        const micToggle = document.getElementById('micToggle');
-        const audioFileInput = document.getElementById('audioFile');
-        const clearDecodedBtn = document.getElementById('clearDecoded');
 
-        // Initialize audio context and analyser
         function initAudio() {
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -720,228 +654,11 @@
             }
         }
 
-        // ========== UNIFIED DTMF DECODER ==========
-        // This function is used by BOTH file upload and microphone decoding
-        function detectDTMFFromFrequencies(frequencyData, sampleRate) {
-            const fftSize = frequencyData.length * 2;
-            const binWidth = sampleRate / fftSize;
-            
-            // DTMF frequency groups
-            const lowFreqs = [697, 770, 852, 941];
-            const highFreqs = [1209, 1336, 1477];
-            
-            // Find peaks in frequency data
-            function findPeak(targetFreq, tolerance = 50) {
-                const targetBin = Math.round(targetFreq / binWidth);
-                const toleranceBins = Math.round(tolerance / binWidth);
-                
-                let maxMagnitude = 0;
-                let maxBin = targetBin;
-                
-                for (let i = Math.max(0, targetBin - toleranceBins); 
-                     i < Math.min(frequencyData.length, targetBin + toleranceBins); 
-                     i++) {
-                    if (frequencyData[i] > maxMagnitude) {
-                        maxMagnitude = frequencyData[i];
-                        maxBin = i;
-                    }
-                }
-                
-                return { magnitude: maxMagnitude, frequency: maxBin * binWidth };
-            }
-            
-            // Detect low and high frequency components
-            let detectedLow = null;
-            let detectedHigh = null;
-            let maxLowMag = 0;
-            let maxHighMag = 0;
-            
-            const threshold = 100; // Minimum magnitude threshold
-            
-            for (const freq of lowFreqs) {
-                const peak = findPeak(freq);
-                if (peak.magnitude > threshold && peak.magnitude > maxLowMag) {
-                    maxLowMag = peak.magnitude;
-                    detectedLow = freq;
-                }
-            }
-            
-            for (const freq of highFreqs) {
-                const peak = findPeak(freq);
-                if (peak.magnitude > threshold && peak.magnitude > maxHighMag) {
-                    maxHighMag = peak.magnitude;
-                    detectedHigh = freq;
-                }
-            }
-            
-            // Map frequency pair to digit
-            if (detectedLow && detectedHigh) {
-                for (const [digit, [low, high]] of Object.entries(dtmfFrequencies)) {
-                    if (low === detectedLow && high === detectedHigh) {
-                        return digit;
-                    }
-                }
-            }
-            
-            return null;
-        }
-
-        // ========== FILE UPLOAD DECODER ==========
-        audioFileInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            decodedOutput.textContent = 'Decoding audio file...';
-            
-            try {
-                initAudio();
-                
-                const arrayBuffer = await file.arrayBuffer();
-                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-                
-                // Analyze audio buffer using unified decoder
-                const channelData = audioBuffer.getChannelData(0);
-                const sampleRate = audioBuffer.sampleRate;
-                const windowSize = 2048;
-                const hopSize = 512;
-                
-                let detectedDigits = '';
-                let lastDigit = null;
-                let lastTime = 0;
-                
-                // Process audio in windows
-                for (let i = 0; i < channelData.length - windowSize; i += hopSize) {
-                    const window = channelData.slice(i, i + windowSize);
-                    
-                    // Perform FFT (simplified - using Web Audio API)
-                    const offlineContext = new OfflineAudioContext(1, windowSize, sampleRate);
-                    const source = offlineContext.createBufferSource();
-                    const analyserNode = offlineContext.createAnalyser();
-                    analyserNode.fftSize = windowSize;
-                    
-                    const buffer = offlineContext.createBuffer(1, windowSize, sampleRate);
-                    buffer.copyToChannel(window, 0);
-                    source.buffer = buffer;
-                    
-                    source.connect(analyserNode);
-                    analyserNode.connect(offlineContext.destination);
-                    
-                    source.start();
-                    await offlineContext.startRendering();
-                    
-                    const frequencyData = new Uint8Array(analyserNode.frequencyBinCount);
-                    analyserNode.getByteFrequencyData(frequencyData);
-                    
-                    // Use unified decoder
-                    const digit = detectDTMFFromFrequencies(frequencyData, sampleRate);
-                    
-                    const currentTime = i / sampleRate;
-                    if (digit && (digit !== lastDigit || currentTime - lastTime > 0.3)) {
-                        detectedDigits += digit;
-                        lastDigit = digit;
-                        lastTime = currentTime;
-                    }
-                }
-                
-                if (detectedDigits) {
-                    decodedSequence = detectedDigits;
-                    decodedOutput.textContent = `Decoded: ${detectedDigits}`;
-                } else {
-                    decodedOutput.textContent = 'No DTMF tones detected in audio file';
-                }
-                
-            } catch (error) {
-                console.error('Error decoding audio:', error);
-                decodedOutput.textContent = 'Error decoding audio file';
-            }
-        });
-
-        // ========== MICROPHONE DECODER ==========
-        async function startMicrophone() {
-            try {
-                initAudio();
-                
-                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                const source = audioContext.createMediaStreamSource(micStream);
-                
-                micAnalyser = audioContext.createAnalyser();
-                micAnalyser.fftSize = 2048;
-                micDataArray = new Uint8Array(micAnalyser.frequencyBinCount);
-                
-                source.connect(micAnalyser);
-                
-                isRecording = true;
-                micToggle.textContent = '⏹️ Stop Microphone';
-                micToggle.classList.add('btn-recording');
-                decodedOutput.textContent = 'Listening for DTMF tones...';
-                
-                detectDTMFFromMicrophone();
-                
-            } catch (error) {
-                console.error('Error accessing microphone:', error);
-                alert('Could not access microphone. Please check permissions.');
-            }
-        }
-
-        function stopMicrophone() {
-            if (micStream) {
-                micStream.getTracks().forEach(track => track.stop());
-                micStream = null;
-            }
-            
-            isRecording = false;
-            micToggle.textContent = '🎤 Start Microphone';
-            micToggle.classList.remove('btn-recording');
-            
-            if (decodedSequence) {
-                decodedOutput.textContent = `Decoded: ${decodedSequence}`;
-            } else {
-                decodedOutput.textContent = 'No DTMF tones detected';
-            }
-        }
-
-        function detectDTMFFromMicrophone() {
-            if (!isRecording) return;
-            
-            micAnalyser.getByteFrequencyData(micDataArray);
-            
-            // Use unified decoder
-            const digit = detectDTMFFromFrequencies(micDataArray, audioContext.sampleRate);
-            
-            const now = Date.now();
-            if (digit && (digit !== lastDetectedDigit || now - lastDetectionTime > detectionCooldown)) {
-                decodedSequence += digit;
-                decodedOutput.textContent = `Decoded: ${decodedSequence}`;
-                lastDetectedDigit = digit;
-                lastDetectionTime = now;
-            }
-            
-            requestAnimationFrame(detectDTMFFromMicrophone);
-        }
-
-        // Microphone toggle
-        micToggle.addEventListener('click', () => {
-            if (isRecording) {
-                stopMicrophone();
-            } else {
-                startMicrophone();
-            }
-        });
-
-        // Clear decoded output
-        clearDecodedBtn.addEventListener('click', () => {
-            decodedSequence = '';
-            lastDetectedDigit = null;
-            lastDetectionTime = 0;
-            decodedOutput.textContent = 'Upload audio or start microphone to decode DTMF tones...';
-        });
-
-        // ========== EXISTING CODE (Generator Functions) ==========
-        
         // Detect input mode
         function detectMode(input) {
             const hasDigits = /[0-9*#,\/']/.test(input);
             const hasLetters = /[a-zA-Z]/.test(input);
+
             if (hasLetters && !hasDigits) return 'text';
             if (hasDigits && !hasLetters) return 'numbers';
             return 'mixed';
@@ -953,23 +670,28 @@
                                   .replace(/'/g, '|WORD|')
                                   .replace(/\//g, '|WORD|')
                                   .replace(/,/g, '');
+
             const words = normalized.split('|WORD|');
             let result = [];
 
             for (const word of words) {
                 if (word.trim().length === 0) continue;
+
                 const groups = word.trim().split(/\s+/);
                 let wordResult = '';
 
                 for (const group of groups) {
                     if (group.length === 0) continue;
+
                     let i = 0;
                     while (i < group.length) {
                         const currentDigit = group[i];
                         let count = 1;
+
                         while (i + count < group.length && group[i + count] === currentDigit) {
                             count++;
                         }
+
                         if (t9Map[currentDigit]) {
                             const letters = t9Map[currentDigit];
                             const index = (count - 1) % letters.length;
@@ -977,13 +699,16 @@
                         } else {
                             wordResult += currentDigit;
                         }
+
                         i += count;
                     }
                 }
+
                 if (wordResult) {
                     result.push(wordResult);
                 }
             }
+
             return result.join(' ');
         }
 
@@ -995,6 +720,7 @@
 
             for (const word of words) {
                 if (word.length === 0) continue;
+
                 let wordNumbers = '';
                 let lastKey = null;
 
@@ -1002,11 +728,13 @@
                     if (letterToKey[char]) {
                         const { key, presses } = letterToKey[char];
                         const digitSequence = key.repeat(presses);
+
                         if (lastKey === key) {
                             wordNumbers += ' ' + digitSequence;
                         } else {
                             wordNumbers += digitSequence;
                         }
+
                         lastKey = key;
                     } else if (char === ' ') {
                         wordNumbers += '0';
@@ -1016,40 +744,48 @@
                         lastKey = null;
                     }
                 }
+
                 if (wordNumbers) {
                     result.push(wordNumbers);
                 }
             }
-            return result.join(` ${jWordSeparators} `);
+
+            return result.join(' / ');
         }
 
         // T9 predictive suggestions
         function getT9Suggestions(input) {
             const suggestions = [];
             const cleanInput = input.replace(/[^0-9]/g, '');
+
             for (const [pattern, words] of Object.entries(t9Dictionary)) {
                 const cleanPattern = pattern.replace(/\s+/g, '');
                 if (cleanPattern.startsWith(cleanInput) && cleanInput.length > 2) {
                     suggestions.push(...words);
                 }
             }
+
             return [...new Set(suggestions)];
         }
 
         // Play DTMF tone with waveform
         function playDTMF(digit, duration = toneDuration) {
             if (!audioEnabled) return;
+
             initAudio();
+
             if (!dtmfFrequencies[digit]) return;
 
             const [freq1, freq2] = dtmfFrequencies[digit];
             const now = audioContext.currentTime;
+
             const osc1 = audioContext.createOscillator();
             const osc2 = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
 
             osc1.frequency.value = freq1;
             osc2.frequency.value = freq2;
+
             osc1.connect(gainNode);
             osc2.connect(gainNode);
 
@@ -1077,11 +813,14 @@
         // Draw waveform
         function drawWaveform() {
             if (!waveformEnabled || !analyser || !canvas) return;
+
             requestAnimationFrame(drawWaveform);
+
             analyser.getByteTimeDomainData(dataArray);
 
             canvasCtx.fillStyle = 'rgb(240, 240, 240)';
             canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+
             canvasCtx.lineWidth = 2;
             canvasCtx.strokeStyle = 'rgb(102, 126, 234)';
             canvasCtx.beginPath();
@@ -1092,11 +831,13 @@
             for (let i = 0; i < dataArray.length; i++) {
                 const v = dataArray[i] / 128.0;
                 const y = v * canvas.height / 2;
+
                 if (i === 0) {
                     canvasCtx.moveTo(x, y);
                 } else {
                     canvasCtx.lineTo(x, y);
                 }
+
                 x += sliceWidth;
             }
 
@@ -1106,6 +847,7 @@
 
         // Play sequence with stop capability
         async function playSequence() {
+            // If already playing, stop
             if (isPlaying) {
                 stopPlayback = true;
                 isPlaying = false;
@@ -1116,17 +858,22 @@
 
             const input = unifiedInput.value;
             const mode = detectMode(input);
+
+            // Determine which sequence to play
             let sequenceToPlay;
-            
             if (mode === 'text') {
+                // If text input, play the decoded DTMF from output
                 sequenceToPlay = outputDisplay.textContent;
             } else {
+                // If numbers input, play the input directly
                 sequenceToPlay = input;
             }
 
             const digits = sequenceToPlay.match(/[0-9*#]/g);
+
             if (!digits || digits.length === 0) return;
 
+            // Set playing state
             isPlaying = true;
             stopPlayback = false;
             playButton.classList.add('playing');
@@ -1134,9 +881,11 @@
 
             for (let i = 0; i < digits.length; i++) {
                 if (stopPlayback) break;
+
                 const digit = digits[i];
+
+                // Check for pause in original sequence
                 const digitIndex = sequenceToPlay.indexOf(digit, i > 0 ? sequenceToPlay.indexOf(digits[i-1]) + 1 : 0);
-                
                 if (digitIndex >= 0 && sequenceToPlay[digitIndex + 1] === ',') {
                     await new Promise(resolve => setTimeout(resolve, pauseDuration));
                     if (stopPlayback) break;
@@ -1146,6 +895,7 @@
                 await new Promise(resolve => setTimeout(resolve, toneDuration + 50));
             }
 
+            // Reset button state
             isPlaying = false;
             playButton.classList.remove('playing');
             playButton.innerHTML = '▶️ Play Sequence';
@@ -1159,6 +909,7 @@
             }
 
             initAudio();
+
             const sampleRate = audioContext.sampleRate;
             const totalDuration = recordedSequence.reduce((sum, item) => sum + item.duration + 50, 0) / 1000;
             const length = sampleRate * totalDuration;
@@ -1179,6 +930,7 @@
                         Math.sin(2 * Math.PI * freq2 * t)
                     ) / 2;
                 }
+
                 offset += samples + Math.floor(sampleRate * 0.05);
             }
 
@@ -1189,7 +941,7 @@
             a.href = url;
             a.download = 'dtmf_sequence.wav';
             a.click();
-            setTimeout(() => URL.revokeObjectURL(url), 100);
+
             showTooltip('Audio exported!', event);
         }
 
@@ -1201,16 +953,6 @@
             const channels = [];
             let offset = 0;
             let pos = 0;
-
-            function setUint16(data) {
-                view.setUint16(pos, data, true);
-                pos += 2;
-            }
-
-            function setUint32(data) {
-                view.setUint32(pos, data, true);
-                pos += 4;
-            }
 
             setUint32(0x46464952);
             setUint32(length - 8);
@@ -1240,11 +982,22 @@
             }
 
             return arrayBuffer;
+
+            function setUint16(data) {
+                view.setUint16(pos, data, true);
+                pos += 2;
+            }
+
+            function setUint32(data) {
+                view.setUint32(pos, data, true);
+                pos += 4;
+            }
         }
 
         // Copy to clipboard
         function copyToClipboard(text, event) {
             if (!text || text.includes('Start typing')) return;
+
             navigator.clipboard.writeText(text).then(() => {
                 showTooltip('Copied to clipboard! ✓', event);
             });
@@ -1257,6 +1010,7 @@
             tooltip.style.left = event.pageX + 'px';
             tooltip.style.top = (event.pageY - 40) + 'px';
             tooltip.classList.add('show');
+
             setTimeout(() => {
                 tooltip.classList.remove('show');
             }, 2000);
@@ -1268,6 +1022,7 @@
             const currentLength = input.length;
             const mode = detectMode(input);
 
+            // Auto-play tone when digit is typed
             if (currentLength > lastInputLength) {
                 const newChar = input[currentLength - 1];
                 if (dtmfFrequencies[newChar]) {
@@ -1313,7 +1068,8 @@
             predictiveSuggestions.classList.remove('show');
             lastInputLength = unifiedInput.value.length;
             unifiedInput.focus();
-            unifiedInput.setSelectionRange(unifiedInput.value.length, unifiedInput.value.length);
+             // Move cursor to end            
+             unifiedInput.setSelectionRange(unifiedInput.value.length, unifiedInput.value.length); 
         };
 
         // Control handlers
@@ -1364,16 +1120,16 @@
         document.querySelectorAll('.key').forEach(button => {
             button.addEventListener('click', () => {
                 const digit = button.dataset.digit;
-                unifiedInput.focus();
-                const cursorPos = unifiedInput.selectionStart ?? unifiedInput.value.length;
+                playDTMF(digit);
+
+                const cursorPos = unifiedInput.selectionStart;
                 const currentValue = unifiedInput.value;
                 const newValue = currentValue.slice(0, cursorPos) + digit + currentValue.slice(cursorPos);
                 unifiedInput.value = newValue;
-                const newCursorPos = cursorPos + 1;
-                unifiedInput.setSelectionRange(newCursorPos, newCursorPos);
-                playDTMF(digit);
+                unifiedInput.setSelectionRange(cursorPos + 1, cursorPos + 1);
+                // unifiedInput.focus();
                 unifiedInput.dispatchEvent(new Event('input'));
-                document.getElementById("focusHere").focus();
+
                 button.style.transform = 'scale(0.95)';
                 setTimeout(() => button.style.transform = '', 100);
             });
@@ -1382,10 +1138,11 @@
         // Special keys
         document.getElementById('pauseBtn').addEventListener('click', () => {
             const cursorPos = unifiedInput.selectionStart;
-            const currentValue = unifiedInput.value + '.';
+            const currentValue = unifiedInput.value;
             const newValue = currentValue.slice(0, cursorPos) + ',' + currentValue.slice(cursorPos);
             unifiedInput.value = newValue;
-            unifiedInput.setSelectionRange(unifiedInput.value.length, unifiedInput.value.length);
+            unifiedInput.setSelectionRange(cursorPos + 1, cursorPos + 1);
+            unifiedInput.focus();
             lastInputLength = unifiedInput.value.length;
         });
 
