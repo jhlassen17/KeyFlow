@@ -6,7 +6,7 @@
         @Description: A web tool to generate DTMF tones, convert text to numbers, decode audio files, and decode live microphone input
         @License: MIT License
         @Last Updated: 2026-05-18
-        @Version: 1.1.1
+        @Version: 1.2.2
     -->
 <head>
     <meta charset="UTF-8">
@@ -463,15 +463,39 @@
   }
 
   .decoded-output {
-      background: white;
-      padding: var(--space-md);
-      border-radius: var(--radius-md);
-      border-left: 4px solid var(--color-success);
-      font-family: var(--font-mono);
-      min-height: 60px;
-      font-size: var(--font-output);
-      margin-top: var(--space-md);
-  }
+    background: white;
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--color-success);
+    font-family: var(--font-mono);
+    min-height: 60px;
+    font-size: var(--font-output);
+    margin-top: var(--space-md);
+    cursor: pointer;  /* ADD THIS */
+    transition: all 0.2s;  /* ADD THIS */
+    position: relative;  /* ADD THIS */
+}
+
+.decoded-output:hover {
+    background: #f0f0f0;
+    border-left-color: #40c057;
+}
+
+.decoded-output::after {
+    content: '📋 Click to copy';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: var(--font-mode-indicator);
+    color: #999;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.decoded-output:hover::after {
+    opacity: 1;
+}
 </style>
 
 </head>
@@ -492,7 +516,7 @@
             <label for="audioFile" class="upload-label">
                 📁 Click to upload audio file (WAV, MP3, OGG)
             </label>
-            <input type="file" id="audioFile" class="file-upload" accept="audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/x-m4a,audio/aac,audio/ogg,audio/webm,audio/*">
+            <input type="file" id="audioFile" class="file-upload" accept="audio/*">
             
             <!-- Microphone Controls -->
             <div class="action-buttons" style="margin-bottom: 15px;">
@@ -597,7 +621,7 @@
         </div>
         <div id="siteFooter">
             <!-- Footer -->
-            <p class="subtitle">&#0169 (2026) - Lassens.IT - Made with ❤️. Version: 1.1.0 - <a href="https://buymeacoffee.com/hanf" title="Support Us">Buy us a drink</a></p>
+            <p class="subtitle">&#0169 (2026) - Lassens.IT - Made with ❤️. Version: 1.2.2 - <a href="https://buymeacoffee.com/hanf" title="Support Us">Buy us a drink</a></p>
         </div>
     </div>
     
@@ -616,9 +640,18 @@
 
         // T9 mapping
         const t9Map = {
-            '2': 'ABC', '3': 'DEF', '4': 'GHI', '5': 'JKL',
-            '6': 'MNO', '7': 'PQRS', '8': 'TUV', '9': 'WXYZ',
-            '0': ' ', '1': '1', '*': '*', '#': '#'
+            '2': 'ABC2',     // 4th press = 2
+            '3': 'DEF3',     // 4th press = 3
+            '4': 'GHI4',     // 4th press = 4
+            '5': 'JKL5',     // 4th press = 5
+            '6': 'MNO6',     // 4th press = 6
+            '7': 'PQRS7',    // 5th press = 7
+            '8': 'TUV8',     // 4th press = 8
+            '9': 'WXYZ9',    // 5th press = 9
+            '0': ' ',
+            '1': '1',
+            '*': '*',
+            '#': '#'
         };
 
         // Reverse mapping for text to numbers
@@ -693,7 +726,7 @@
         let decodedSequence = '';
         let lastDetectedDigit = null;
         let lastDetectionTime = 0;
-        let detectionCooldown = 300; // ms between detections
+        let detectionCooldown = 300;
 
         // Elements
         const unifiedInput = document.getElementById('unifiedInput');
@@ -721,16 +754,13 @@
         }
 
         // ========== UNIFIED DTMF DECODER ==========
-        // This function is used by BOTH file upload and microphone decoding
         function detectDTMFFromFrequencies(frequencyData, sampleRate) {
             const fftSize = frequencyData.length * 2;
             const binWidth = sampleRate / fftSize;
             
-            // DTMF frequency groups
             const lowFreqs = [697, 770, 852, 941];
             const highFreqs = [1209, 1336, 1477];
             
-            // Find peaks in frequency data
             function findPeak(targetFreq, tolerance = 50) {
                 const targetBin = Math.round(targetFreq / binWidth);
                 const toleranceBins = Math.round(tolerance / binWidth);
@@ -750,13 +780,12 @@
                 return { magnitude: maxMagnitude, frequency: maxBin * binWidth };
             }
             
-            // Detect low and high frequency components
             let detectedLow = null;
             let detectedHigh = null;
             let maxLowMag = 0;
             let maxHighMag = 0;
             
-            const threshold = 100; // Minimum magnitude threshold
+            const threshold = 100;
             
             for (const freq of lowFreqs) {
                 const peak = findPeak(freq);
@@ -774,7 +803,6 @@
                 }
             }
             
-            // Map frequency pair to digit
             if (detectedLow && detectedHigh) {
                 for (const [digit, [low, high]] of Object.entries(dtmfFrequencies)) {
                     if (low === detectedLow && high === detectedHigh) {
@@ -786,7 +814,7 @@
             return null;
         }
 
-        // ========== FILE UPLOAD DECODER ==========
+        // ========== FIXED DURATION CALCULATION ==========
         audioFileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -799,21 +827,17 @@
                 const arrayBuffer = await file.arrayBuffer();
                 const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
                 
-                // Analyze audio buffer using unified decoder
                 const channelData = audioBuffer.getChannelData(0);
                 const sampleRate = audioBuffer.sampleRate;
                 const windowSize = 2048;
                 const hopSize = 512;
                 
-                let detectedDigits = '';
-                let lastDigit = null;
-                let lastTime = 0;
+                // First pass: detect all tones with timestamps
+                let toneDetections = [];
                 
-                // Process audio in windows
                 for (let i = 0; i < channelData.length - windowSize; i += hopSize) {
                     const window = channelData.slice(i, i + windowSize);
                     
-                    // Perform FFT (simplified - using Web Audio API)
                     const offlineContext = new OfflineAudioContext(1, windowSize, sampleRate);
                     const source = offlineContext.createBufferSource();
                     const analyserNode = offlineContext.createAnalyser();
@@ -832,15 +856,64 @@
                     const frequencyData = new Uint8Array(analyserNode.frequencyBinCount);
                     analyserNode.getByteFrequencyData(frequencyData);
                     
-                    // Use unified decoder
                     const digit = detectDTMFFromFrequencies(frequencyData, sampleRate);
-                    
                     const currentTime = i / sampleRate;
-                    if (digit && (digit !== lastDigit || currentTime - lastTime > 0.3)) {
-                        detectedDigits += digit;
-                        lastDigit = digit;
-                        lastTime = currentTime;
+                    
+                    if (digit) {
+                        toneDetections.push({ digit, time: currentTime });
                     }
+                }
+                
+                // Second pass: Group tones and calculate press count more accurately
+                let detectedDigits = '';
+                let i = 0;
+                
+                while (i < toneDetections.length) {
+                    const currentDetection = toneDetections[i];
+                    let groupDigit = currentDetection.digit;
+                    let groupStartTime = currentDetection.time;
+                    let groupEndTime = currentDetection.time;
+                    
+                    // Find the end of this continuous tone group (same digit, small gaps)
+                    let j = i + 1;
+                    while (j < toneDetections.length && toneDetections[j].digit === groupDigit) {
+                        const timeSinceLastDetection = toneDetections[j].time - groupEndTime;
+                        
+                        // If gap is > 80ms within same digit, it's a new press of same digit
+                        if (timeSinceLastDetection > 0.08) {
+                            break;
+                        }
+                        
+                        groupEndTime = toneDetections[j].time;
+                        j++;
+                    }
+                    
+                    // Calculate group duration
+                    const groupDuration = groupEndTime - groupStartTime;
+                    
+                    // FIXED: More conservative press count calculation
+                    // Use 0.23 as divisor to prevent over-counting
+                    // This accounts for detection overlap and timing variations
+                    const pressCount = Math.max(1, Math.round(groupDuration / 0.23));
+                    
+                    // Output the digit that many times
+                    for (let k = 0; k < pressCount; k++) {
+                        detectedDigits += groupDigit;
+                    }
+                    
+                    // Check for space before next group
+                    if (j < toneDetections.length) {
+                        const nextDetection = toneDetections[j];
+                        const gapToNext = nextDetection.time - groupEndTime;
+                        
+                        // Add space if gap >= 80ms OR next digit is different
+                        if (gapToNext >= 0.08 || nextDetection.digit !== groupDigit) {
+                            detectedDigits += ' ';
+                        }
+                    }
+                    
+                    // Move to next group
+                    i = j;
                 }
                 
                 if (detectedDigits) {
@@ -856,7 +929,8 @@
             }
         });
 
-        // ========== MICROPHONE DECODER ==========
+        // ========== REST OF CODE (UNCHANGED) ==========
+        
         async function startMicrophone() {
             try {
                 initAudio();
@@ -905,11 +979,13 @@
             
             micAnalyser.getByteFrequencyData(micDataArray);
             
-            // Use unified decoder
             const digit = detectDTMFFromFrequencies(micDataArray, audioContext.sampleRate);
             
             const now = Date.now();
             if (digit && (digit !== lastDetectedDigit || now - lastDetectionTime > detectionCooldown)) {
+                if (lastDetectedDigit && digit !== lastDetectedDigit && now - lastDetectionTime > 500) {
+                    decodedSequence += ' ';
+                }
                 decodedSequence += digit;
                 decodedOutput.textContent = `Decoded: ${decodedSequence}`;
                 lastDetectedDigit = digit;
@@ -919,7 +995,6 @@
             requestAnimationFrame(detectDTMFFromMicrophone);
         }
 
-        // Microphone toggle
         micToggle.addEventListener('click', () => {
             if (isRecording) {
                 stopMicrophone();
@@ -928,7 +1003,6 @@
             }
         });
 
-        // Clear decoded output
         clearDecodedBtn.addEventListener('click', () => {
             decodedSequence = '';
             lastDetectedDigit = null;
@@ -936,9 +1010,6 @@
             decodedOutput.textContent = 'Upload audio or start microphone to decode DTMF tones...';
         });
 
-        // ========== EXISTING CODE (Generator Functions) ==========
-        
-        // Detect input mode
         function detectMode(input) {
             const hasDigits = /[0-9*#,\/']/.test(input);
             const hasLetters = /[a-zA-Z]/.test(input);
@@ -947,29 +1018,38 @@
             return 'mixed';
         }
 
-        // Convert numbers to text
         function numbersToText(input) {
+            // Split by large gaps (word separators): 3+ spaces, /, or '
             let normalized = input.replace(/\s{3,}/g, '|WORD|')
-                                  .replace(/'/g, '|WORD|')
-                                  .replace(/\//g, '|WORD|')
-                                  .replace(/,/g, '');
+                                .replace(/\//g, '|WORD|')
+                                .replace(/'/g, '|WORD|')
+                                .replace(/,/g, ''); // Remove pauses
+            
             const words = normalized.split('|WORD|');
             let result = [];
 
             for (const word of words) {
                 if (word.trim().length === 0) continue;
-                const groups = word.trim().split(/\s+/);
+                
+                // Split by single spaces to get individual letter groups
+                const letterGroups = word.trim().split(/\s+/);
                 let wordResult = '';
 
-                for (const group of groups) {
+                for (const group of letterGroups) {
                     if (group.length === 0) continue;
+                    
+                    // Count consecutive same digits
                     let i = 0;
                     while (i < group.length) {
                         const currentDigit = group[i];
                         let count = 1;
+                        
+                        // Count how many times this digit repeats
                         while (i + count < group.length && group[i + count] === currentDigit) {
                             count++;
                         }
+                        
+                        // Map to letter using T9
                         if (t9Map[currentDigit]) {
                             const letters = t9Map[currentDigit];
                             const index = (count - 1) % letters.length;
@@ -977,17 +1057,19 @@
                         } else {
                             wordResult += currentDigit;
                         }
+                        
                         i += count;
                     }
                 }
+                
                 if (wordResult) {
                     result.push(wordResult);
                 }
             }
+            
             return result.join(' ');
         }
 
-        // Convert text to numbers
         function textToNumbers(input) {
             const text = input.toUpperCase();
             const words = text.split(/\s+/);
@@ -995,35 +1077,36 @@
 
             for (const word of words) {
                 if (word.length === 0) continue;
-                let wordNumbers = '';
+                let wordNumbers = [];  // Changed to array to collect letter groups
                 let lastKey = null;
 
                 for (const char of word) {
                     if (letterToKey[char]) {
                         const { key, presses } = letterToKey[char];
                         const digitSequence = key.repeat(presses);
-                        if (lastKey === key) {
-                            wordNumbers += ' ' + digitSequence;
-                        } else {
-                            wordNumbers += digitSequence;
-                        }
+                        
+                        // Always add as separate group (with space)
+                        wordNumbers.push(digitSequence);
                         lastKey = key;
                     } else if (char === ' ') {
-                        wordNumbers += '0';
+                        wordNumbers.push('0');
                         lastKey = null;
                     } else {
-                        wordNumbers += char;
+                        wordNumbers.push(char);
                         lastKey = null;
                     }
                 }
-                if (wordNumbers) {
-                    result.push(wordNumbers);
+                
+                if (wordNumbers.length > 0) {
+                    // Join letter groups with spaces
+                    result.push(wordNumbers.join(' '));
                 }
             }
-            return result.join(` ${jWordSeparators} `);
+
+            // Join words with ' 0 ' (space character in T9)
+            return result.join(' 0 ');
         }
 
-        // T9 predictive suggestions
         function getT9Suggestions(input) {
             const suggestions = [];
             const cleanInput = input.replace(/[^0-9]/g, '');
@@ -1036,7 +1119,6 @@
             return [...new Set(suggestions)];
         }
 
-        // Play DTMF tone with waveform
         function playDTMF(digit, duration = toneDuration) {
             if (!audioEnabled) return;
             initAudio();
@@ -1074,7 +1156,6 @@
             recordedSequence.push({ digit, duration, timestamp: Date.now() });
         }
 
-        // Draw waveform
         function drawWaveform() {
             if (!waveformEnabled || !analyser || !canvas) return;
             requestAnimationFrame(drawWaveform);
@@ -1104,7 +1185,6 @@
             canvasCtx.stroke();
         }
 
-        // Play sequence with stop capability
         async function playSequence() {
             if (isPlaying) {
                 stopPlayback = true;
@@ -1124,26 +1204,28 @@
                 sequenceToPlay = input;
             }
 
-            const digits = sequenceToPlay.match(/[0-9*#]/g);
-            if (!digits || digits.length === 0) return;
+            if (!sequenceToPlay || sequenceToPlay.includes('Start typing')) return;
 
             isPlaying = true;
             stopPlayback = false;
             playButton.classList.add('playing');
             playButton.innerHTML = '⏹️ Stop';
 
-            for (let i = 0; i < digits.length; i++) {
+            for (let i = 0; i < sequenceToPlay.length; i++) {
                 if (stopPlayback) break;
-                const digit = digits[i];
-                const digitIndex = sequenceToPlay.indexOf(digit, i > 0 ? sequenceToPlay.indexOf(digits[i-1]) + 1 : 0);
                 
-                if (digitIndex >= 0 && sequenceToPlay[digitIndex + 1] === ',') {
-                    await new Promise(resolve => setTimeout(resolve, pauseDuration));
-                    if (stopPlayback) break;
+                const char = sequenceToPlay[i];
+                
+                if (dtmfFrequencies[char]) {
+                    playDTMF(char);
+                    await new Promise(resolve => setTimeout(resolve, toneDuration + 50));
                 }
-
-                playDTMF(digit);
-                await new Promise(resolve => setTimeout(resolve, toneDuration + 50));
+                else if (char === ' ') {
+                    await new Promise(resolve => setTimeout(resolve, 150));
+                }
+                else if (char === ',') {
+                    await new Promise(resolve => setTimeout(resolve, pauseDuration));
+                }
             }
 
             isPlaying = false;
@@ -1151,35 +1233,67 @@
             playButton.innerHTML = '▶️ Play Sequence';
         }
 
-        // Export audio
         function exportAudio() {
-            if (recordedSequence.length === 0) {
-                alert('No sequence recorded. Play some tones first!');
+            const input = unifiedInput.value;
+            const mode = detectMode(input);
+            let sequenceToExport;
+            
+            if (mode === 'text') {
+                sequenceToExport = outputDisplay.textContent;
+            } else {
+                sequenceToExport = input;
+            }
+
+            if (!sequenceToExport || sequenceToExport.includes('Start typing')) {
+                alert('No sequence to export. Type something first!');
                 return;
             }
 
             initAudio();
             const sampleRate = audioContext.sampleRate;
-            const totalDuration = recordedSequence.reduce((sum, item) => sum + item.duration + 50, 0) / 1000;
-            const length = sampleRate * totalDuration;
+            
+            let totalDuration = 0;
+            const letterGap = 0.15;
+            
+            for (let i = 0; i < sequenceToExport.length; i++) {
+                const char = sequenceToExport[i];
+                if (dtmfFrequencies[char]) {
+                    totalDuration += (toneDuration + 50) / 1000;
+                } else if (char === ' ') {
+                    totalDuration += letterGap;
+                } else if (char === ',') {
+                    totalDuration += pauseDuration / 1000;
+                }
+            }
+
+            const length = Math.ceil(sampleRate * totalDuration);
             const buffer = audioContext.createBuffer(1, length, sampleRate);
             const data = buffer.getChannelData(0);
 
             let offset = 0;
-            for (const item of recordedSequence) {
-                const [freq1, freq2] = dtmfFrequencies[item.digit];
-                const duration = item.duration / 1000;
-                const samples = Math.floor(sampleRate * duration);
+            
+            for (let i = 0; i < sequenceToExport.length; i++) {
+                const char = sequenceToExport[i];
+                
+                if (dtmfFrequencies[char]) {
+                    const [freq1, freq2] = dtmfFrequencies[char];
+                    const duration = toneDuration / 1000;
+                    const samples = Math.floor(sampleRate * duration);
 
-                for (let i = 0; i < samples; i++) {
-                    const t = i / sampleRate;
-                    const envelope = Math.min(1, i / (sampleRate * 0.01), (samples - i) / (sampleRate * 0.01));
-                    data[offset + i] = envelope * volume * (
-                        Math.sin(2 * Math.PI * freq1 * t) +
-                        Math.sin(2 * Math.PI * freq2 * t)
-                    ) / 2;
+                    for (let j = 0; j < samples && offset + j < length; j++) {
+                        const t = j / sampleRate;
+                        const envelope = Math.min(1, j / (sampleRate * 0.01), (samples - j) / (sampleRate * 0.01));
+                        data[offset + j] = envelope * volume * (
+                            Math.sin(2 * Math.PI * freq1 * t) +
+                            Math.sin(2 * Math.PI * freq2 * t)
+                        ) / 2;
+                    }
+                    offset += samples + Math.floor(sampleRate * 0.05);
+                } else if (char === ' ') {
+                    offset += Math.floor(sampleRate * letterGap);
+                } else if (char === ',') {
+                    offset += Math.floor(sampleRate * (pauseDuration / 1000));
                 }
-                offset += samples + Math.floor(sampleRate * 0.05);
             }
 
             const wav = audioBufferToWav(buffer);
@@ -1190,10 +1304,9 @@
             a.download = 'dtmf_sequence.wav';
             a.click();
             setTimeout(() => URL.revokeObjectURL(url), 100);
-            showTooltip('Audio exported!', event);
+            showTooltip('Audio exported!', { pageX: window.innerWidth / 2, pageY: window.innerHeight / 2 });
         }
 
-        // Audio buffer to WAV
         function audioBufferToWav(buffer) {
             const length = buffer.length * buffer.numberOfChannels * 2 + 44;
             const arrayBuffer = new ArrayBuffer(length);
@@ -1242,7 +1355,6 @@
             return arrayBuffer;
         }
 
-        // Copy to clipboard
         function copyToClipboard(text, event) {
             if (!text || text.includes('Start typing')) return;
             navigator.clipboard.writeText(text).then(() => {
@@ -1250,7 +1362,6 @@
             });
         }
 
-        // Show tooltip
         function showTooltip(message, event) {
             const tooltip = document.getElementById('tooltip');
             tooltip.textContent = message;
@@ -1262,7 +1373,6 @@
             }, 2000);
         }
 
-        // Unified input handler with AUTO-PLAY
         unifiedInput.addEventListener('input', (e) => {
             const input = e.target.value;
             const currentLength = input.length;
@@ -1300,12 +1410,12 @@
                 predictiveSuggestions.classList.remove('show');
             } else {
                 modeIndicator.textContent = '🔄 Mixed Mode';
-                outputDisplay.textContent = 'Mixed input detected...';
+                const converted = textToNumbers(input);
+                outputDisplay.textContent = converted || 'Type text...';
                 predictiveSuggestions.classList.remove('show');
             }
         });
 
-        // Apply T9 suggestion
         window.applySuggestion = function(word) {
             const numbers = textToNumbers(word);
             unifiedInput.value = numbers;
@@ -1316,7 +1426,6 @@
             unifiedInput.setSelectionRange(unifiedInput.value.length, unifiedInput.value.length);
         };
 
-        // Control handlers
         document.getElementById('toneDuration').addEventListener('input', (e) => {
             toneDuration = parseInt(e.target.value);
             document.getElementById('durationValue').textContent = toneDuration + 'ms';
@@ -1332,7 +1441,6 @@
             document.getElementById('pauseValue').textContent = pauseDuration + 'ms';
         });
 
-        // Toggle buttons
         document.getElementById('audioToggle').addEventListener('click', function() {
             audioEnabled = !audioEnabled;
             this.classList.toggle('active');
@@ -1360,7 +1468,6 @@
             }
         });
 
-        // Keypad
         document.querySelectorAll('.key').forEach(button => {
             button.addEventListener('click', () => {
                 const digit = button.dataset.digit;
@@ -1379,7 +1486,6 @@
             });
         });
 
-        // Special keys
         document.getElementById('pauseBtn').addEventListener('click', () => {
             const cursorPos = unifiedInput.selectionStart;
             const currentValue = unifiedInput.value + '.';
@@ -1398,7 +1504,6 @@
             unifiedInput.focus();
         });
 
-        // Action buttons
         playButton.addEventListener('click', playSequence);
         document.getElementById('exportAudio').addEventListener('click', exportAudio);
         document.getElementById('copyOutput').addEventListener('click', (e) => {
@@ -1409,11 +1514,23 @@
             copyToClipboard(outputDisplay.textContent, e);
         });
 
-        // Keyboard support
         document.addEventListener('keydown', (e) => {
             if (dtmfFrequencies[e.key] && document.activeElement !== unifiedInput) {
                 playDTMF(e.key);
             }
+        });
+
+        // Click decoded output to copy
+        decodedOutput.addEventListener('click', (e) => {
+            const text = decodedOutput.textContent;
+            // Don't copy if it's the placeholder text
+            if (!text || text.includes('Upload audio') || text.includes('Listening for') || text.includes('No DTMF')) {
+                return;
+            }
+            
+            // Extract just the decoded sequence (remove "Decoded: " prefix if present)
+            const cleanText = text.replace(/^Decoded:\s*/, '');
+            copyToClipboard(cleanText, e);
         });
     </script>
 </body>
